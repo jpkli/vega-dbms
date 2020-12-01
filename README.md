@@ -8,7 +8,7 @@ Setup and install dependencies
 yarn install
 ```
 
-Run demo app that run on http://localhost:3000
+Run demo app that run on http://localhost:3000/demo.html
 
 ```
 yarn start

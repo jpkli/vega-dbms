@@ -4,7 +4,8 @@
       "module": "es2015",
       "moduleResolution": "node",
       "noEmit": true,
-      "strict": false
+      "strict": false,
+      "sourceMap": true
     }
   }
   

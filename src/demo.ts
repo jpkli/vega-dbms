@@ -12,7 +12,9 @@ class TestDatabaseTable implements DatabaseTable {
   }
 
   async runQuery (sql: string, params?: any): Promise<Record<string, unknown>[]> {
+    console.log(sql)
     const res = await fetch("/dbms?query=" + sql)
+    console.log(await res.json())
     return res.json()
   }
 }

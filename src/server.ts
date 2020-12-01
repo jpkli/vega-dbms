@@ -1,14 +1,16 @@
 import * as path from "path"
 import * as express from "express"
 import { Request, Response } from "express"
-import Bundler from "parcel-bundler"
+// import Bundler from "parcel-bundler"
 // import { DuckDbTable } from './duckdb'
 
 const { PORT = 3000 } = process.env
 const entry = path.resolve("src/demo.html")
-const bundle = new Bundler(entry)
+// const bundle = new Bundler(entry)
 const app = express()
-app.use(bundle.middleware())
+
+app.use(express.static('public'))
+// app.use(bundle.middleware())
 
 // const duckDbTable = new DuckDbTable({name: "housing"})
 // let dataReady = false
@@ -25,7 +27,7 @@ app.use(bundle.middleware())
 //   });
 // });
 
-app.get("/query", async (req: Request, res: Response) => {
+app.get("/dbms", async (req: Request, res: Response) => {
   res.send({
     message: {query: req.query}
   })

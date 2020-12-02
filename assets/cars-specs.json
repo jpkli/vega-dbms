@@ -1,0 +1,14 @@
+{
+    "datafile": "./assets/cars.csv",
+    "table": "cars",
+    "specs": [
+        {
+            "data": { "name": "table" },
+            "mark": "bar",
+            "encoding": {
+                "x": { "field": "make" },
+                "y": { "aggregate": "count" }
+            }
+        }
+    ]
+}

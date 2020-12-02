@@ -99,7 +99,7 @@ export class DuckDbTable implements DatabaseTable {
   public async importDatafile (filePath: string): Promise<DuckDbTable> {
     return new Promise((resolve, reject) => {
       console.log("import csv file")
-      if (Object.keys(this.schema).length > 0) {
+      if (this.schema !== undefined && this.schema.size > 0) {
         this.db.run(
           `COPY ${this.name} FROM '${filePath}' ( AUTO_DETECT TRUE );`,
           (err) => {
@@ -141,7 +141,7 @@ export class DuckDbTable implements DatabaseTable {
 
   public async runQuery(sql: string, params?: any): Promise<Record<string, unknown>[]> {
     return new Promise((resolve, reject) => {
-      this.db.run(sql, params, (result: duckdb.RunResult, err: Error) => {
+      this.db.all(sql, params, (err: Error, result: Record<string, unknown>[],) => {
         if (err) {
           reject(err)
         } else {

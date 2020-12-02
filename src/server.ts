@@ -1,36 +1,40 @@
-import * as path from "path"
 import * as express from "express"
 import { Request, Response } from "express"
-// import Bundler from "parcel-bundler"
-// import { DuckDbTable } from './duckdb'
+import { DuckDbTable } from './duckdb'
+import testSpecs from '../assets/cars-specs.json'
 
 const { PORT = 3000 } = process.env
-const entry = path.resolve("src/demo.html")
-// const bundle = new Bundler(entry)
 const app = express()
 
 app.use(express.static('public'))
-// app.use(bundle.middleware())
 
-// const duckDbTable = new DuckDbTable({name: "housing"})
-// let dataReady = false
-// const DATA_FILE = "data/housing.csv"
-// duckDbTable.importDatafile(DATA_FILE).then(() => {
-//   dataReady = true
-// })
-// .catch(err => {
-//   console.log(err)
-// })
-// app.get("/", async (req: Request, res: Response) => {
-//   res.send({
-//     message: {dataReady}
-//   });
-// });
+let dataReady = false
+const { table, datafile } = testSpecs
+const duckDbTable = new DuckDbTable({name: table})
+
+duckDbTable.importDatafile(datafile).then(() => {
+  dataReady = true
+})
+.catch(err => {
+  console.log(err)
+})
+app.get("/", async (req: Request, res: Response) => {
+  res.send({
+    message: {dataReady}
+  });
+});
 
 app.get("/dbms", async (req: Request, res: Response) => {
-  res.send({
-    message: {query: req.query}
-  })
+  if (typeof req.query.sql === 'string') {
+    const result = await duckDbTable.runQuery(req.query.sql)
+    res.send({
+      message: {result}
+    })
+  } else {
+    res.status(400)
+    res.send(false)
+  }
+
 })
 
 app.listen(PORT, () => {

@@ -6,6 +6,7 @@
       "noEmit": true,
       "strict": false,
       "sourceMap": true
-    }
+    },
+    "include": ["duckdb.d.ts"]
   }
   

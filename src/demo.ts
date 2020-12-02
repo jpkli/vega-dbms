@@ -1,7 +1,9 @@
 import * as Vega from "vega"
 import { compile as compileToVega, TopLevelSpec } from "vega-lite"
 import { DatabaseTable } from "./models"
-import { VegaDbTransform, ProtoVegaDbTransform } from "./main"
+import { VegaDbTransform } from "./main"
+import { vegaTransformToSql } from "./vega-sql"
+import testSpecs from '../assets/cars-specs.json'
 
 /* Test for porting custom Vega tranform to run query on a DuckDB Table */
 class TestDatabaseTable implements DatabaseTable {
@@ -11,50 +13,49 @@ class TestDatabaseTable implements DatabaseTable {
     this.name = name
   }
 
-  async runQuery (sql: string, params?: any): Promise<Record<string, unknown>[]> {
-    console.log(sql)
-    const res = await fetch("/dbms?query=" + sql)
-    console.log(await res.json())
-    return res.json()
+  async runQuery (sql: string): Promise<Record<string, unknown>[]> {
+    const res = await fetch("/dbms?sql=" + sql)
+    const resJson = await res.json()
+    return resJson.message?.result ?? []
   }
 }
 
 /* Add custom transform that use DuckDB */
 Vega.transforms.duckdb = new VegaDbTransform({
   id: "duckdb",
-  databaseTable: new TestDatabaseTable("vegaDuckDb")
+  databaseTable: new TestDatabaseTable("cars")
 });
 
-/* Use prototype for custom transform as the same way in scalable-vega */
-// (Vega as any).transforms.duckdb = ProtoVegaDbTransform
+const { table, specs } = testSpecs
 
-const vlSpec: TopLevelSpec = {
-    data: { name: "table" },
-    mark: "bar",
-    encoding: {
-      x: { field: "ocean_proximity" },
-      y: { aggregate: "count" }
+for (const spec of specs) {
+  const vlSpec = spec as TopLevelSpec
+  const vgSpec = compileToVega(vlSpec).spec
+
+  const dataSpec = vgSpec.data
+  for (const [index, spec] of dataSpec.entries()) {
+    if (spec.transform && spec.transform.length > 0) {
+      const duckdbTransforms = []
+      for (const transform of spec.transform) {
+        duckdbTransforms.push({
+          type: "duckdb",
+          query: {
+            signal: vegaTransformToSql(table, transform)
+          }
+        })
+      }
+      dataSpec[index].transform = duckdbTransforms
     }
   }
+  
+  const runtime = Vega.parse(vgSpec)
+  const container = document.createElement("div")
+ 
+  document.body.appendChild(container)
 
-const vgSpec = compileToVega(vlSpec).spec
-
-const aggregate = {
-    type: "duckdb",
-    query: {
-      signal: `'select ocean_proximity, COUNT(*) from housing'`
-    }
-  } as any
-
-vgSpec.data[1] = {
-    name: "data_0",
-    transform: [aggregate]
+  new Vega.View(runtime)
+      .logLevel(Vega.Info)
+      .renderer("svg")
+      .initialize(container)
+      .runAsync()
 }
-
-const runtime = Vega.parse(vgSpec)
-const view = new Vega.View(runtime)
-    .logLevel(Vega.Info)
-    .renderer("svg")
-    .initialize(document.querySelector("#vega-lite"))
-
-view.runAsync()

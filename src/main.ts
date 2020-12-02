@@ -1,4 +1,4 @@
-import { Transform as VegaTransform, ingest, inherits } from "vega"
+import { Transform as VegaTransform, ingest } from "vega"
 import { DatabaseTable } from "./models"
 
 export class VegaDbTransform extends VegaTransform {
@@ -24,43 +24,14 @@ export class VegaDbTransform extends VegaTransform {
     }
   }
 
-  public test (params) {
-    VegaTransform.call(this, [], params)
-  }
-
   public async transform (params: Record<string, any>, pulse: Record<string, any>) {
     const result = await this.databaseTable.runQuery(params.query)
     result.forEach(ingest)
     const out: Record<string, unknown> = pulse.fork(pulse.NO_FIELDS & pulse.NO_SOURCE)
-    out.rem = this.value
 
+    out.rem = this.value
     this.value = out.add = out.source = result
 
     return out
   }
 }
-
-export function ProtoVegaDbTransform(params) {
-  VegaTransform.call(this, [], params);
-}
-
-ProtoVegaDbTransform.Definition = {
-  type: "duckdb",
-  metadata: { changes: true, source: true },
-  params: [{ name: "query", type: "string", required: true }]
-};
-
-const prototype = inherits(ProtoVegaDbTransform, VegaTransform);
-
-prototype.transform = async function(_, pulse) {
-  console.log(_.query)
-  const result = []
-  result.forEach(ingest);
-
-  const out = pulse.fork(pulse.NO_FIELDS & pulse.NO_SOURCE);
-  out.rem = this.value;
-
-  this.value = out.add = out.source = result;
-
-  return out;
-};
